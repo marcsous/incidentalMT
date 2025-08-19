@@ -33,7 +33,7 @@ gamma = 42.58e6; % gyromagnetic ratio (Hz/T)
 
 %% saturating b1 field 
 
-b1 = logspace(-7,-4,10); % (T)
+b1 = logspace(-7,-4,50); % (T)
 
 %% Bloch simulations
 
@@ -114,7 +114,7 @@ for j = 1:numel(b1)
     S1 = 1 - 2*exp(-t./T1);
     S2 = 1 + bS.*exp(-t./T1S) + bL.*exp(-t./T1L);
 
-    % fitting
+    %% fitting
     range = t<Zcross(j); % pre zero-crossing
     [T1pre(j) x] = fit_ir_barral(t(range),M(range,1),T1L);
     fit_pre = x(1)+x(2)*exp(-t/T1pre(j)); 
@@ -123,7 +123,7 @@ for j = 1:numel(b1)
     [T1post(j) x] = fit_ir_barral(t(range),M(range,1),T1L);
     fit_post = x(1)+x(2)*exp(-t/T1post(j)); 
 
-    % plot signal
+    %% plot signal
     subplot(1,3,1);    
     range = t<2.5; % display range
     plot(1e3*t(range),M(range,1),'color',color(2));
@@ -201,5 +201,5 @@ axis square
 text(1e3*interp1(dSIR1(j:k),T1(j:k),interp1(T1,dSIR2,T1(k)))+1e3*deltaT1/4.5,0.25,'\DeltaT_1');
 
 % arrow overlays
-subplot(1,3,1); annotation(gcf,'arrow',[0.22 0.212],[0.420 0.518]);
+subplot(1,3,1); annotation(gcf,'arrow',[0.220 0.212],[0.420 0.518]);
 subplot(1,3,3); annotation(gcf,'doublearrow',[0.788 0.827],[0.585 0.585]);

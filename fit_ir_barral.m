@@ -2,7 +2,7 @@ function [T1 x phi ci95] = fit_ir_barral(TI,data,TR,T1,lambda)
 %[T1 x phi ci95] = fit_ir_barral(TI,data,T1)
 %
 % Fit inversion recovery data to estimate T1.
-% Signed or complex data only. No magnitude.
+% Signed or complex data only. Not magnitude.
 % Multiple coupled RHS okay (multi-coil).
 %
 % Arguments:
@@ -62,7 +62,7 @@ end
 err = resnorm/v;
 cov = inv(H)*err;
 stderr = sqrt(diag(cov));
-ci95 = tinv(1-0.05/2,v)*stderr;
+ci95 = 1.96*stderr;
 
 % calculate r2
 r2 = 1 - resnorm/sum(sum(abs(data-mean(data)).^2));
@@ -110,12 +110,12 @@ L = [1 1/2]*lambda;
 if 1
     % linear
     M = A'*A+L'*L;
-    x = inv(M)*(A'*b);
+    x = pinv(M)*(A'*b);
     phi = 0; % unused
 else
     % phase constrained
     M = real(A'*A+L'*L);
-    invM = inv(M); Ab = A'*b;
+    invM = pinv(M); Ab = A'*b;
     phi = angle(dot(conj(Ab),invM*Ab))/2;
     x = invM*real(Ab.*exp(-i*phi));
 end
