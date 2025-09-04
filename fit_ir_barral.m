@@ -1,5 +1,5 @@
 function [T1 x phi ci95] = fit_ir_barral(TI,data,TR,T1,lambda)
-%[T1 x phi ci95] = fit_ir_barral(TI,data,T1)
+%[T1 x phi ci95] = fit_ir_barral(TI,data,T1,lambda)
 %
 % Fit inversion recovery data to estimate T1.
 % Signed or complex data only. Not magnitude.
