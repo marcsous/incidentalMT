@@ -35,7 +35,7 @@ b1 = logspace(-8,-4,50); % (T)
 
 %% SuperLorentzian lineshape
 
-offset = 1000; % frequency offset (Hz) to mimic effect of 2D multislice and resolve the SuperLorentzian singularity 
+offset = 1000; % frequency offset (Hz) 
 g = SuperLorentz_LineShape(offset,T2);
 
 %% Bloch simulations
