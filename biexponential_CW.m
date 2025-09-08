@@ -3,7 +3,7 @@
 % Mf is free pool magnetization
 % Mb is bound pool magnetization
 %
-%  R1f     kf    R1b+RF
+%  R1f     kf    R1b+RFb
 % <--- Mf <==> Mb --->
 %          kb
 %
@@ -26,14 +26,17 @@ TR = 5;          % repetition time (s)
 dt = 1e-6;       % simulation time step (s)
 t = 0:dt:TR;     % time after inversion (s)
 
-Mf_0 = 1.0;      % free pool size
-Mb_0 = 0.1;      % bound pool size
-
-gamma = 42.58e6; % gyromagnetic ratio (Hz/T)
+Mf_0 = 1;        % free pool size
+Mb_0 = kf/kb;    % bound pool size
 
 %% saturating b1 field 
 
-b1 = logspace(-7,-4,50); % (T)
+b1 = logspace(-8,-4,50); % (T)
+
+%% SuperLorentzian lineshape
+
+offset = 1000; % frequency offset (Hz) to mimic effect of 2D multislice and resolve the SuperLorentzian singularity 
+g = SuperLorentz_LineShape(offset,T2);
 
 %% Bloch simulations
 
@@ -51,9 +54,6 @@ for j = 1:numel(b1)
         N = numel(t);
         M = zeros(N,2); 
 
-        % bound pool transverse magnetization
-        Mxy = 0; 
-
         % inversion pulse (invert Mf, saturate Mb)
         if loop==1
             Mf =-Mf_0;
@@ -69,18 +69,15 @@ for j = 1:numel(b1)
             M(n,1) = Mf;
             M(n,2) = Mb;
 
-            % b1 irradiation (bound pool)
-            theta = 2*pi*gamma*b1(j)*dt; % rotation angle (rad)
-            rot2d = [cos(theta) -sin(theta);sin(theta) cos(theta)];
-            tmp = rot2d * [Mb; Mxy]; Mb = tmp(1); Mxy = tmp(2);
-
-            % T2 relaxation (bound pool)
-            Mxy = Mxy * exp(-dt/T2);
+            % RF saturation rate (doi:10.1016/j.neuroimage.2015.03.068)
+            gamma = 2.675e8; % rad/s/T
+            w1 = gamma*b1(j);
+            RFb = pi*w1^2*g;
 
             % equilibration and T1 relaxation (doi:10.1002/mrm.10386)
-            dMfdt = -R1f*(Mf-Mf_0) - kf*(Mf - Mb*Mf_0/Mb_0);
-            dMbdt = -R1b*(Mb-Mb_0) - kb*(Mb - Mf*Mb_0/Mf_0);
-           
+            dMfdt = -R1f*(Mf - Mf_0) - kf*(Mf - Mb*Mf_0/Mb_0);
+            dMbdt = -R1b*(Mb - Mb_0) - kb*(Mb - Mf*Mb_0/Mf_0) - RFb*Mb;
+
             % update magnetization
             Mf = Mf + dMfdt*dt;
             Mb = Mb + dMbdt*dt;
@@ -92,7 +89,7 @@ for j = 1:numel(b1)
     fprintf('B1 = %.1eT\n',b1(j)); 
     [~,k] = min(abs(M(:,1)));
     Zcross(j) = interp1(M(k-1:k+1,1),t(k-1:k+1),0);
-    fprintf('Zero crossing = %.3fs\n',Zcross(j));
+    fprintf('Mz zero crossing: %.3fs\n',Zcross(j));
 
     %% analytical model
 
@@ -149,25 +146,25 @@ for j = 1:numel(b1)
     subplot(1,3,2);
     h2 = semilogx(1e6*b1,1e3*[T1post T1pre]);
     h2(2).LineStyle='--';
-    grid on; xlim([1e-1 1e2]);
-    xticks([1e-1 1e0 1e1 1e2]);
-    xticklabels({'0.1','1','10','100'});
+    grid on; xlim([1e-2 1e2]);
+    xticks([1e-2 1e-1 1e0 1e1 1e2]);
+    xticklabels({'0.01','0.1','1','10','100'});
     axis square
     ylabel('Fitted T_1 (ms)');
     xlabel('B_1 (µT)');
-    text(3.7e1,1045/(R1f+kf),sprintf('T_{1CW}'));
-    text(1.4e-1,970*T1L,sprintf('T_{1L}'));
+    text(20,1045/(R1f+kf),sprintf('T_{1CW}'));
+    text(0.02,970*T1L,sprintf('T_{1L}'));
     legend({'Post zero crossing','Pre  zero crossing'});
     %set(get(gca(),'XAxis'),'MinorTickValues',10.^(-1:2));
     drawnow;
 
 end
 
-%% dsir curve (TI 350/500 and B1 s.t. ΔT1 ~ 100ms)
+%% dsir curve
 
 TI = [0.350; 0.500]; % (s)
 T1 = 0.400:dt:0.900; % (s)
-T1CW = 1./(1./T1+0.222*kf); % continuous wave T1 (s)
+T1CW = 1./(1./T1+0.222*kf); % continuous wave T1 s.t. ΔT1~100ms (s)
 
 % signals
 S1 = 1 - 2*exp(-TI./T1);

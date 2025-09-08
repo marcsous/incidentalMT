@@ -25,8 +25,8 @@ TR = 5;          % repetition time (s)
 dt = 1e-6;       % simulation time step (s)
 t = 0:dt:TR;     % time after inversion (s)
 
-Mf_0 = 1.0;      % free pool size
-Mb_0 = 0.1;      % bound pool size
+Mf_0 = 1;        % free pool size
+Mb_0 = kf/kb;    % bound pool size
 
 %% "soft" inversion (inverts Mf, saturates Mb)
 
@@ -45,7 +45,7 @@ for loop = 1:4
     N = numel(t);
     M = zeros(N,2);
 
-    % inversion pulse
+    % inversion pulse (invert Mf, saturate Mb)
     if loop==1 || loop==2 || loop==3
         Mf =-Mf_0;
         Mb = Mb_0 * saturate;
@@ -68,8 +68,8 @@ for loop = 1:4
         end
 
         % equilibration and T1 relaxation (doi:10.1002/mrm.10386)
-        dMfdt = -(Mf-Mf_0)*R1f - kf*(Mf - Mb*Mf_0/Mb_0)*(loop>1);
-        dMbdt = -(Mb-Mb_0)*R1b - kb*(Mb - Mf*Mb_0/Mf_0)*(loop>1);
+        dMfdt = -R1f*(Mf - Mf_0) - kf*(Mf - Mb*Mf_0/Mb_0)*(loop>1);
+        dMbdt = -R1b*(Mb - Mb_0) - kb*(Mb - Mf*Mb_0/Mf_0)*(loop>1);
 
         % update magnetization
         Mf = Mf + dMfdt*dt;

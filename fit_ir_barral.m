@@ -1,4 +1,4 @@
-function [T1 x phi ci95] = fit_ir_barral(TI,data,TR,T1,lambda)
+function [T1 x phi ci95] = fit_ir_barral(TI,data,T1,lambda)
 %[T1 x phi ci95] = fit_ir_barral(TI,data,T1,lambda)
 %
 % Fits inversion recovery data to estimate T1.
@@ -8,13 +8,12 @@ function [T1 x phi ci95] = fit_ir_barral(TI,data,TR,T1,lambda)
 %
 % Notes:
 % Signed or complex data only. Not magnitude.
-% Multiple coupled RHS okay (multi-coil).
+% Multiple coupled RHS okay (for multi-coil).
 % Lambda penalizes x(1)+x(2)/2 (should be 0).
 %
 % Arguments:
 %  TI is a vector of inversion times (Nx1)
 %  data is an array of complex data points (NxM)
-%  TR (optional) is the repetition time (scalar)
 %  T1 (optional) is an initial T1 estimate (scalar)
 %  lambda (optional) is regularization term (scalar)
 %
@@ -24,9 +23,6 @@ if isreal(data) && all(data>=0)
 end
 if length(data)~=length(TI)
     error('data and TI size mis-match')
-end
-if ~exist('TR','var') || isempty(TR)
-    TR = Inf;
 end
 if ~exist('T1','var') || isempty(T1)
     R1 = 1/mean(TI);
@@ -40,7 +36,6 @@ end
 % shape and type consistency
 R1 = reshape(double(R1),1,1);
 TI = reshape(double(TI),[],1);
-TR = reshape(double(TR),[],1);
 lambda = reshape(double(lambda),1,1);
 data = reshape(double(data),numel(TI),[]);
 
@@ -50,11 +45,11 @@ nrhs = size(data,2);
 %% least squares fitting
 
 % optimization
-opts = optimset('display','off','TolFun',1e-10);
-[R1,~,~,~,~,H] = fminunc(@(R)myfun(R,TI,TR,data,lambda),R1,opts);
+opts = optimset('display','off','TolFun',1e-16);
+[R1,~,~,~,~,H] = fminunc(@(R)myfun(R,TI,data,lambda),R1,opts);
 
 % 95% confidence interval
-[resnorm f x phi] = myfun(R1,TI,TR,data,lambda);
+[resnorm f x phi] = myfun(R1,TI,data,lambda);
 if isreal(data)
     v = numel(data)-1-2*nrhs; % [T1 A1 A2]
 else
@@ -96,7 +91,7 @@ text(0.03,0.83,str,'Units','Normalized','FontName','FixedWidth')
 fprintf('Fitted T1: %.3f ± %.3f\n',T1,ci95);
 
 %% function: [x(1) + x(2)*exp(-R*t)] * exp(i*phi)
-function [resnorm f x phi] = myfun(R,ti,tr,b,lambda)
+function [resnorm f x phi] = myfun(R,ti,b,lambda)
 
 % multiple coils (nc)
 [nti nc] = size(b);
