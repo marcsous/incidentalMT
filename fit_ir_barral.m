@@ -2,20 +2,20 @@ function [T1 x phi ci95] = fit_ir_barral(TI,data,T1,lambda)
 %[T1 x phi ci95] = fit_ir_barral(TI,data,T1,lambda)
 %
 % Fits inversion recovery data to estimate T1.
-%
 % Model: [x(1) + x(2)*exp(-TI/T1)] * exp(i*phi)
-% Ref. Barral (2010) doi.org/10.1002/mrm.22497
-%
-% Notes:
-% Signed or complex data only. Not magnitude.
-% Multiple coupled RHS okay (for multi-coil).
-% Lambda penalizes x(1)+x(2)/2 (should be 0).
 %
 % Arguments:
 %  TI is a vector of inversion times (Nx1)
 %  data is an array of complex data points (NxM)
 %  T1 (optional) is an initial T1 estimate (scalar)
 %  lambda (optional) is regularization term (scalar)
+%
+% Notes:
+% Signed or complex data only. Not magnitude.
+% Multiple coupled RHS okay (for multi-coil).
+% Lambda penalizes x(1)+x(2)/2 (should be 0).
+%
+% Ref. Barral (2010) doi.org/10.1002/mrm.22497
 %
 %% check inputs
 if isreal(data) && all(data>=0)
