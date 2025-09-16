@@ -100,7 +100,7 @@ for j = 1:numel(b1)
     end
 
     fprintf('B1 = %.1eT\n',b1(j)); 
-    [~,k] = min(abs(M(:,1))); k = max(k,2);
+    [~,k] = min(abs(M(:,1)));
     Zcross(j) = interp1(M(k-1:k+1,1),t(k-1:k+1),0);
     fprintf('Mz zero crossing: %.3fs\n',Zcross(j));
 
