@@ -68,8 +68,8 @@ for loop = 1:4
         end
 
         % equilibration and T1 relaxation (doi:10.1002/mrm.10386)
-        dMfdt = -R1f*(Mf - Mf_0) - kf*(Mf - Mb*Mf_0/Mb_0)*(loop>1);
-        dMbdt = -R1b*(Mb - Mb_0) - kb*(Mb - Mf*Mb_0/Mf_0)*(loop>1);
+        dMfdt = -R1f*(Mf - Mf_0) - (kf*Mf - kb*Mb) * (loop>1);
+        dMbdt = -R1b*(Mb - Mb_0) - (kb*Mb - kf*Mf) * (loop>1);
 
         % update magnetization
         Mf = Mf + dMfdt*dt;

@@ -31,12 +31,25 @@ Mb_0 = kf/kb;    % bound pool size
 
 %% saturating b1 field 
 
-b1 = logspace(-8,-4,50); % (T)
+b1 = logspace(-7,-4,51); % (T)
+delta = 1000; % frequency (Hz)
 
-%% SuperLorentzian lineshape
+%% lineshape (doi.org/10.1006/jmrb.1995.1111)
 
-offset = 1000; % frequency offset (Hz) 
-g = SuperLorentz_LineShape(offset,T2);
+shape = 'Gaussian';
+
+switch shape
+    case 'Lorentzian';
+        g = (T2/pi)/(1+(2*pi*delta*T2)^2);
+    case 'Gaussian';
+        g = (T2/sqrt(2*pi))*exp(-(2*pi*delta*T2)^2/2);
+    case 'superLorentzian-Asslander';
+        f = @(theta)abs(3*cos(theta).^2-1);
+        g = (T2*sqrt(2/pi))*integral(@(theta)exp(-2*(2*pi*delta*T2./f(theta)).^2)./f(theta),0,1);
+    case 'superLorentzian-Henkelman';
+        f = @(theta)abs(3*cos(theta).^2-1);
+        g = (T2*sqrt(2/pi))*integral(@(theta)exp(-2*(2*pi*delta*T2./f(theta)).^2).*sin(theta)./f(theta),0,pi/2);
+end
 
 %% Bloch simulations
 
@@ -75,8 +88,8 @@ for j = 1:numel(b1)
             RFb = pi*w1^2*g;
 
             % equilibration and T1 relaxation (doi:10.1002/mrm.10386)
-            dMfdt = -R1f*(Mf - Mf_0) - kf*(Mf - Mb*Mf_0/Mb_0);
-            dMbdt = -R1b*(Mb - Mb_0) - kb*(Mb - Mf*Mb_0/Mf_0) - RFb*Mb;
+            dMfdt = -R1f*(Mf - Mf_0) - kf*Mf + kb*Mb;
+            dMbdt = -R1b*(Mb - Mb_0) - kb*Mb + kf*Mf - RFb*Mb;
 
             % update magnetization
             Mf = Mf + dMfdt*dt;
@@ -87,7 +100,7 @@ for j = 1:numel(b1)
     end
 
     fprintf('B1 = %.1eT\n',b1(j)); 
-    [~,k] = min(abs(M(:,1)));
+    [~,k] = min(abs(M(:,1))); k = max(k,2);
     Zcross(j) = interp1(M(k-1:k+1,1),t(k-1:k+1),0);
     fprintf('Mz zero crossing: %.3fs\n',Zcross(j));
 
@@ -146,14 +159,14 @@ for j = 1:numel(b1)
     subplot(1,3,2);
     h2 = semilogx(1e6*b1,1e3*[T1post T1pre]);
     h2(2).LineStyle='--';
-    grid on; xlim([1e-2 1e2]);
-    xticks([1e-2 1e-1 1e0 1e1 1e2]);
-    xticklabels({'0.01','0.1','1','10','100'});
+    grid on; xlim([1e-1 1e2]);
+    xticks([1e-1 1e0 1e1 1e2]);
+    xticklabels({'0.1','1','10','100'});
     axis square
     ylabel('Fitted T_1 (ms)');
     xlabel('B_1 (µT)');
-    text(20,1045/(R1f+kf),sprintf('T_{1CW}'));
-    text(0.02,970*T1L,sprintf('T_{1L}'));
+    text(0.13,970*T1L,sprintf('T_{1L}'));    
+    text(33,1045/(R1f+kf),sprintf('T_{1CW}'));
     legend({'Post zero crossing','Pre  zero crossing'});
     %set(get(gca(),'XAxis'),'MinorTickValues',10.^(-1:2));
     drawnow;
@@ -199,4 +212,5 @@ text(1e3*interp1(dSIR1(j:k),T1(j:k),interp1(T1,dSIR2,T1(k)))+1e3*deltaT1/4.5,0.2
 
 % arrow overlays
 subplot(1,3,1); annotation(gcf,'arrow',[0.220 0.212],[0.420 0.518]);
-subplot(1,3,3); annotation(gcf,'doublearrow',[0.788 0.827],[0.585 0.585]);
+subplot(1,3,3); annotation(gcf,'doublearrow',[0.788 0.826],[0.585 0.585]);
+
