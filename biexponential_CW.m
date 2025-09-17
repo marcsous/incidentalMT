@@ -31,7 +31,7 @@ Mb_0 = kf/kb;    % bound pool size
 
 %% saturating b1 field 
 
-b1 = logspace(-7,-4,51); % (T)
+b1 = logspace(-7,-4,50); % (T)
 delta = 1000; % frequency (Hz)
 
 %% lineshape (doi.org/10.1002/mrm.29071)
@@ -44,7 +44,7 @@ switch shape
     case 'Gaussian';
         g = (T2/sqrt(2*pi))*exp(-(2*pi*delta*T2)^2/2);
     case 'superLorentzian';
-        f = @(z)abs(3*z.^2-1);
+        f = @(z)abs(3*z.^2-1); % z=cos(theta)
         g = (T2*sqrt(2/pi))*integral(@(z)exp(-2*(2*pi*delta*T2./f(z)).^2)./f(z),0,1);
 end
 
@@ -159,7 +159,7 @@ end
 
 TI = [0.350; 0.500]; % (s)
 T1 = 0.400:dt:0.900; % (s)
-T1CW = 1./(1./T1+kf-0.7768893696437); % chosen s.t. ΔT1~100ms (s)
+T1CW = 1./(1./T1+kf-0.776889369643915); % chosen s.t. ΔT1=100ms (s)
 
 % signals
 S1 = 1 - 2*exp(-TI./T1);
