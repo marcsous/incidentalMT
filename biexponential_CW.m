@@ -34,7 +34,7 @@ Mb_0 = kf/kb;    % bound pool size
 b1 = logspace(-7,-4,51); % (T)
 delta = 1000; % frequency (Hz)
 
-%% lineshape (doi.org/10.1006/jmrb.1995.1111)
+%% lineshape (doi.org/10.1002/mrm.29071)
 
 shape = 'Gaussian';
 
@@ -43,12 +43,9 @@ switch shape
         g = (T2/pi)/(1+(2*pi*delta*T2)^2);
     case 'Gaussian';
         g = (T2/sqrt(2*pi))*exp(-(2*pi*delta*T2)^2/2);
-    case 'superLorentzian-Asslander';
-        f = @(theta)abs(3*cos(theta).^2-1);
-        g = (T2*sqrt(2/pi))*integral(@(theta)exp(-2*(2*pi*delta*T2./f(theta)).^2)./f(theta),0,1);
-    case 'superLorentzian-Henkelman';
-        f = @(theta)abs(3*cos(theta).^2-1);
-        g = (T2*sqrt(2/pi))*integral(@(theta)exp(-2*(2*pi*delta*T2./f(theta)).^2).*sin(theta)./f(theta),0,pi/2);
+    case 'superLorentzian';
+        f = @(z)abs(3*z.^2-1);
+        g = (T2*sqrt(2/pi))*integral(@(z)exp(-2*(2*pi*delta*T2./f(z)).^2)./f(z),0,1);
 end
 
 %% Bloch simulations
