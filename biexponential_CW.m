@@ -99,39 +99,24 @@ for j = 1:numel(b1)
 
     end
 
+    %% calculate parameters
+
+    % zero crossing
     fprintf('B1 = %.1eT\n',b1(j)); 
     [~,k] = min(abs(M(:,1)));
     Zcross(j) = interp1(M(k-1:k+1,1),t(k-1:k+1),0);
     fprintf('Mz zero crossing: %.3fs\n',Zcross(j));
 
-    %% analytical model
+    % analytical values
+    T1S = 2/(R1f+R1b+kf+kb+sqrt((R1f-R1b+kf-kb).^2+4*kf*kb)); % (s)
+    T1L = 2/(R1f+R1b+kf+kb-sqrt((R1f-R1b+kf-kb).^2+4*kf*kb)); % (s)
+    T1CW = 1/(R1f+kf); % (s)
 
-    % initialize
-    Mf =-Mf_0;
-    Mb = 0;
-
-    % equilibrium parameters
-    R1S = (R1f+R1b+kf+kb+sqrt((R1f-R1b+kf-kb).^2+4*kf*kb)) / 2; % (s^-1)
-    R1L = (R1f+R1b+kf+kb-sqrt((R1f-R1b+kf-kb).^2+4*kf*kb)) / 2; % (s^-1)
-
-    bS = ((Mf/Mf_0-1)*(R1f-R1L)+(Mf/Mf_0-Mb/Mb_0)*kf) ./ (R1S-R1L);
-    bL =-((Mf/Mf_0-1)*(R1f-R1S)+(Mf/Mf_0-Mb/Mb_0)*kf) ./ (R1S-R1L);
-
-    T1S = 1./R1S; % short T1
-    T1L = 1./R1L; % long T1
-
-    % signals
-    S1 = 1 - 2*exp(-t./T1);
-    S2 = 1 + bS.*exp(-t./T1S) + bL.*exp(-t./T1L);
-
-    %% fitting
+    % fitted T1s
     range = t<Zcross(j); % pre zero-crossing
-    [T1pre(j) x] = fit_ir_barral(t(range),M(range,1),T1L);
-    fit_pre = x(1)+x(2)*exp(-t/T1pre(j)); 
-
+    T1pre(j) = fit_ir_barral(t(range),M(range,1),T1L);
     range = t>Zcross(j); % post zero-crossing
-    [T1post(j) x] = fit_ir_barral(t(range),M(range,1),T1L);
-    fit_post = x(1)+x(2)*exp(-t/T1post(j)); 
+    T1post(j) = fit_ir_barral(t(range),M(range,1),T1L);
 
     %% plot signal
     subplot(1,3,1);    
@@ -166,18 +151,18 @@ for j = 1:numel(b1)
     ylabel('Fitted T_1 (ms)');
     xlabel('B_1 (µT)');
     text(0.13,970*T1L,sprintf('T_{1L}'));    
-    text(33,1045/(R1f+kf),sprintf('T_{1CW}'));
+    text(33,1045*T1CW,sprintf('T_{1CW}'));
     legend({'Post zero crossing','Pre  zero crossing'});
     %set(get(gca(),'XAxis'),'MinorTickValues',10.^(-1:2));
     drawnow;
 
 end
 
-%% dsir curve
+%% generate dsir curve
 
 TI = [0.350; 0.500]; % (s)
 T1 = 0.400:dt:0.900; % (s)
-T1CW = 1./(1./T1+0.222*kf); % continuous wave T1 s.t. ΔT1~100ms (s)
+T1CW = 1./(1./T1+kf-0.7768893696437); % chosen s.t. ΔT1~100ms (s)
 
 % signals
 S1 = 1 - 2*exp(-TI./T1);
@@ -194,6 +179,7 @@ fprintf('dSIR1 at T1=%.3fs: %+.5f\n',T1(k),interp1(T1,dSIR1,T1(k)));
 fprintf('dSIR2 at T1=%.3fs: %+.5f\n',T1(k),interp1(T1,dSIR2,T1(k)));
 fprintf('T1 at dSIR1=%+.5f: %.3fs\n',interp1(T1,dSIR2,T1(k)),T1(k)-deltaT1);
 fprintf('Apparent ΔT1: %.3fs\n',deltaT1);
+deltaT1-0.1
 
 % plots
 subplot(1,3,3);
@@ -212,5 +198,4 @@ text(1e3*interp1(dSIR1(j:k),T1(j:k),interp1(T1,dSIR2,T1(k)))+1e3*deltaT1/4.5,0.2
 
 % arrow overlays
 subplot(1,3,1); annotation(gcf,'arrow',[0.220 0.212],[0.420 0.518]);
-subplot(1,3,3); annotation(gcf,'doublearrow',[0.788 0.826],[0.585 0.585]);
-
+subplot(1,3,3); annotation(gcf,'doublearrow',[0.789 0.826],[0.585 0.585]);
