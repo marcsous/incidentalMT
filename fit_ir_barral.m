@@ -103,15 +103,15 @@ A = [ones(nti,1) exp(-R*ti)];
 L = [1 1/2]*lambda;
 
 % doi.org/10.1016/j.laa.2010.07.011
-M = A'*A+L'*L; Ab = A'*b;
-if 0
+Ab = A'*b; M = A'*A+L'*L;
+if isreal(Ab)
     % linear
     x = pinv(M)*Ab;
     phi = 0; % unused
 else
     % phase constrained
     invM = pinv(real(M)); 
-    phi = angle(dot(conj(Ab),invM*Ab))/2;
+    phi = angle(sum(Ab.*(invM*Ab),1))/2;
     x = invM*real(Ab.*exp(-i*phi));
 end
 
